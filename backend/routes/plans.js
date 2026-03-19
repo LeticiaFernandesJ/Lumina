@@ -40,8 +40,8 @@ Use exatamente este formato:
       "daily_tasks": [
         {"day": "Segunda", "task": "descrição", "duration_min": 60}
       ],
-      "flashcards": ["conceito 1", "conceito 2"],
-      "essay_prompt": "proposta de redação"
+      "flashcards": ["conceito 1", "conceito 2", "conceito 3"],
+      "essay_prompt": "proposta de redação relacionada ao tema da semana"
     }
   ]
 }`;
@@ -60,6 +60,42 @@ Use exatamente este formato:
     res.json({ id: result.lastInsertRowid, plan });
   } catch (e) {
     console.error('❌ Erro generate plan:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Gera flashcards para uma semana específica do plano
+router.post('/generate-week-flashcards', auth, async (req, res) => {
+  try {
+    const { weekIdx, theme, concepts, topic } = req.body;
+
+    console.log(`Gerando flashcards para semana ${weekIdx + 1}: ${theme}`);
+
+    const prompt = `Gere 10 flashcards de estudo em português brasileiro sobre o tema abaixo.
+Retorne SOMENTE um array JSON, sem texto antes ou depois, sem markdown.
+Formato: [{"question": "pergunta", "answer": "resposta"}]
+
+Tema do plano: ${topic}
+Tema da semana: ${theme}
+Conceitos a cobrir: ${concepts}`;
+
+    const raw = await geminiGenerate(process.env.GEMINI_API_KEY, prompt);
+    const cards = extractJSON(raw);
+
+    if (!Array.isArray(cards)) throw new Error('Resposta da IA não é um array');
+
+    for (const c of cards) {
+      db.prepare('INSERT INTO flashcards (user_id, material_id, question, answer, source_type, topic_name) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(req.userId, null, c.question, c.answer, 'plan', theme);
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    db.prepare('INSERT INTO frequency_log (user_id, date, activity_type) VALUES (?, ?, ?)').run(req.userId, today, 'generate_flashcards');
+
+    console.log(`✅ ${cards.length} flashcards gerados para semana ${weekIdx + 1}`);
+    res.json({ generated: cards.length, cards });
+  } catch (e) {
+    console.error('❌ Erro generate-week-flashcards:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
