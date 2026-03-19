@@ -50,7 +50,7 @@ function Heatmap({ logs }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 3, overflowX: 'auto', paddingBottom: 8 }}>
+      <div className='heatmap-scroll' style={{ display: 'flex', gap: 3, overflowX: 'auto', paddingBottom: 8 }}>
         {grid.map((week, wi) => (
           <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {week.map((day, di) => (
@@ -145,7 +145,7 @@ export default function Frequencia() {
       </motion.div>
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
+      <div className='freq-stats' style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
           { icon: '🔥', label: 'Streak atual', value: data?.streak ?? 0, unit: 'dias' },
           { icon: '📚', label: 'Total de sessões', value: data?.sessions?.length ?? 0, unit: 'sessões' },
@@ -163,11 +163,11 @@ export default function Frequencia() {
       {/* Heatmap */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="card" style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 18, marginBottom: 20 }}>Histórico de atividades — último ano</h2>
-        <Heatmap logs={data?.logs || []} />
+        <div style={{ overflowX: "auto", paddingBottom: 4 }}><Heatmap logs={data?.logs || []} /></div>
       </motion.div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, marginBottom: 32 }}>
+      <div className='freq-charts' style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginBottom: 24 }}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="card">
           <h2 style={{ fontSize: 16, marginBottom: 20 }}>Sessões por semana</h2>
           <ResponsiveContainer width="100%" height={180}>
@@ -212,7 +212,7 @@ export default function Frequencia() {
       {/* Badges */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="card">
         <h2 style={{ fontSize: 18, marginBottom: 20 }}>Conquistas</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
           {data?.badges?.map((b, i) => <Badge key={b.id} badge={b} />)}
         </div>
       </motion.div>
