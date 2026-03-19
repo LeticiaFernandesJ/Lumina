@@ -89,7 +89,35 @@ async function initDb() {
     );
   `);
 
+  addProgressTable();
   return _db;
+}
+
+function addProgressTable() {
+  try {
+    _db.run(`
+      CREATE TABLE IF NOT EXISTS plan_progress (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        plan_id INTEGER NOT NULL,
+        week_idx INTEGER NOT NULL,
+        task_idx INTEGER NOT NULL,
+        done INTEGER DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, plan_id, week_idx, task_idx)
+      );
+      CREATE TABLE IF NOT EXISTS plan_week_status (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        plan_id INTEGER NOT NULL,
+        week_idx INTEGER NOT NULL,
+        has_flashcards INTEGER DEFAULT 0,
+        has_essay INTEGER DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, plan_id, week_idx)
+      );
+    `);
+  } catch(e) { console.log('Tabelas progresso:', e.message); }
 }
 
 function makeStmt(sql) {
