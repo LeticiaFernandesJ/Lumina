@@ -238,7 +238,7 @@ export default function Redacao() {
       </motion.div>
 
       {!showHistory ? (
-        <div style={{ display: 'grid', gridTemplateColumns: feedback ? '1fr 1fr' : '1fr', gap: 24 }}>
+        <div className='redacao-grid' style={{ display: 'grid', gridTemplateColumns: feedback ? 'minmax(0,1fr) minmax(0,1fr)' : '1fr', gap: 20 }}>
           {/* Editor */}
           <motion.div layout className="card">
             <h2 style={{ fontSize: 18, marginBottom: 20 }}>Editor</h2>
@@ -310,7 +310,7 @@ export default function Redacao() {
               <h3 style={{ fontFamily: 'Playfair Display, serif', color: '#C4B89A' }}>Nenhuma redação ainda</h3>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            <div className='essay-grid' style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
               {history.map((e, i) => (
                 <motion.div key={e.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                   className="card" style={{ cursor: 'pointer' }} onClick={() => loadEssay(e.id)}>
