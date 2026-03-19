@@ -1,69 +1,91 @@
 const router = require('express').Router();
-const db = require('../db/database');
+const { supabase } = require('../db/database');
 const auth = require('../middleware/auth');
 
-router.get('/stats', auth, (req, res) => {
+router.get('/stats', auth, async (req, res) => {
+  const sb = supabase();
   const userId = req.userId;
-  const totalPdfs = db.prepare('SELECT COUNT(*) as c FROM study_materials WHERE user_id = ?').get(userId).c;
-  const totalCards = db.prepare('SELECT COUNT(*) as c FROM flashcards WHERE user_id = ?').get(userId).c;
-  const avgScore = db.prepare('SELECT AVG(score) as avg FROM essays WHERE user_id = ?').get(userId).avg;
-  const sessions = db.prepare('SELECT * FROM study_sessions WHERE user_id = ? ORDER BY date DESC LIMIT 30').all(userId);
-  
-  // Streak calculation
-  const logs = db.prepare('SELECT DISTINCT date FROM frequency_log WHERE user_id = ? ORDER BY date DESC').all(userId);
+
+  const [mats, cards, essays, sessions, logs] = await Promise.all([
+    sb.from('study_materials').select('id', { count: 'exact' }).eq('user_id', userId),
+    sb.from('flashcards').select('id', { count: 'exact' }).eq('user_id', userId),
+    sb.from('essays').select('score').eq('user_id', userId),
+    sb.from('study_sessions').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(30),
+    sb.from('frequency_log').select('date').eq('user_id', userId).order('date', { ascending: false }),
+  ]);
+
+  const avgScore = essays.data?.length ? essays.data.reduce((a, b) => a + (b.score || 0), 0) / essays.data.length : 0;
+
+  // Streak
   let streak = 0;
+  const dates = [...new Set((logs.data || []).map(l => l.date))];
   const today = new Date().toISOString().split('T')[0];
-  let checkDate = today;
-  for (const log of logs) {
-    if (log.date === checkDate) {
+  let check = today;
+  for (const d of dates) {
+    if (d === check) {
       streak++;
-      const d = new Date(checkDate);
-      d.setDate(d.getDate() - 1);
-      checkDate = d.toISOString().split('T')[0];
+      const dt = new Date(check); dt.setDate(dt.getDate() - 1);
+      check = dt.toISOString().split('T')[0];
     } else break;
   }
 
-  // Last 30 days activity
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const activity = db.prepare(`SELECT date, COUNT(*) as count FROM frequency_log WHERE user_id = ? AND date >= ? GROUP BY date ORDER BY date`).all(userId, thirtyDaysAgo.toISOString().split('T')[0]);
+  // Activity last 30 days
+  const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+  const { data: actData } = await sb.from('frequency_log').select('date').eq('user_id', userId).gte('date', thirtyAgo.toISOString().split('T')[0]);
+  const actMap = {};
+  (actData || []).forEach(r => { actMap[r.date] = (actMap[r.date] || 0) + 1; });
+  const activity = Object.entries(actMap).map(([date, count]) => ({ date, count })).sort((a, b) => a.date.localeCompare(b.date));
 
-  res.json({ totalPdfs, totalCards, avgScore: avgScore ? Math.round(avgScore * 10) / 10 : 0, streak, sessions, activity });
+  res.json({
+    totalPdfs: mats.count || 0,
+    totalCards: cards.count || 0,
+    avgScore: Math.round(avgScore * 10) / 10,
+    streak,
+    sessions: sessions.data || [],
+    activity,
+  });
 });
 
-router.get('/frequency', auth, (req, res) => {
+router.get('/frequency', auth, async (req, res) => {
+  const sb = supabase();
   const userId = req.userId;
-  const logs = db.prepare('SELECT date, activity_type, COUNT(*) as count FROM frequency_log WHERE user_id = ? GROUP BY date, activity_type ORDER BY date DESC LIMIT 365').all(userId);
-  const sessions = db.prepare('SELECT * FROM study_sessions WHERE user_id = ? ORDER BY date DESC').all(userId);
-  const essays = db.prepare('SELECT id, topic_name, score, created_at FROM essays WHERE user_id = ?').all(userId);
-  
-  // Badges
-  const totalPdfs = db.prepare('SELECT COUNT(*) as c FROM study_materials WHERE user_id = ?').get(userId).c;
-  const totalCards = db.prepare('SELECT COUNT(*) as c FROM flashcards WHERE user_id = ?').get(userId).c;
-  const highScore = db.prepare('SELECT MAX(score) as m FROM essays WHERE user_id = ?').get(userId).m;
-  
-  const logs2 = db.prepare('SELECT DISTINCT date FROM frequency_log WHERE user_id = ? ORDER BY date DESC').all(userId);
+
+  const [logs, sessions, essays, mats, cards] = await Promise.all([
+    sb.from('frequency_log').select('date, activity_type').eq('user_id', userId).order('date', { ascending: false }).limit(365),
+    sb.from('study_sessions').select('*').eq('user_id', userId).order('date', { ascending: false }),
+    sb.from('essays').select('id, topic_name, score, created_at').eq('user_id', userId),
+    sb.from('study_materials').select('id', { count: 'exact' }).eq('user_id', userId),
+    sb.from('flashcards').select('id', { count: 'exact' }).eq('user_id', userId),
+  ]);
+
+  // Streak
+  const dates = [...new Set((logs.data || []).map(l => l.date))].sort().reverse();
   let streak = 0;
   const today = new Date().toISOString().split('T')[0];
-  let checkDate = today;
-  for (const log of logs2) {
-    if (log.date === checkDate) { streak++; const d = new Date(checkDate); d.setDate(d.getDate()-1); checkDate = d.toISOString().split('T')[0]; } else break;
+  let check = today;
+  for (const d of dates) {
+    if (d === check) { streak++; const dt = new Date(check); dt.setDate(dt.getDate() - 1); check = dt.toISOString().split('T')[0]; }
+    else break;
   }
-  
-  const badges = [];
-  if (totalPdfs >= 1) badges.push({ id: 'first_pdf', name: 'Primeiro PDF', icon: '📄', earned: true });
-  if (streak >= 7) badges.push({ id: 'streak_7', name: '7 Dias Seguidos', icon: '🔥', earned: true });
-  if (totalCards >= 50) badges.push({ id: 'cards_50', name: '50 Flashcards', icon: '🃏', earned: true });
-  if (highScore >= 9) badges.push({ id: 'score_9', name: 'Nota 9+', icon: '⭐', earned: true });
-  
-  const allBadges = [
-    { id: 'first_pdf', name: 'Primeiro PDF', icon: '📄', earned: totalPdfs >= 1 },
+
+  const highScore = essays.data?.reduce((max, e) => Math.max(max, e.score || 0), 0) || 0;
+
+  // Group logs by date+type for heatmap
+  const logMap = {};
+  (logs.data || []).forEach(l => {
+    const key = l.date;
+    logMap[key] = (logMap[key] || 0) + 1;
+  });
+  const logsFormatted = Object.entries(logMap).map(([date, count]) => ({ date, count }));
+
+  const badges = [
+    { id: 'first_pdf', name: 'Primeiro PDF', icon: '📄', earned: (mats.count || 0) >= 1 },
     { id: 'streak_7', name: '7 Dias Seguidos', icon: '🔥', earned: streak >= 7 },
-    { id: 'cards_50', name: '50 Flashcards', icon: '🃏', earned: totalCards >= 50 },
-    { id: 'score_9', name: 'Nota 9+', icon: '⭐', earned: !!highScore && highScore >= 9 },
+    { id: 'cards_50', name: '50 Flashcards', icon: '🃏', earned: (cards.count || 0) >= 50 },
+    { id: 'score_9', name: 'Nota 9+', icon: '⭐', earned: highScore >= 9 },
   ];
 
-  res.json({ logs, sessions, essays, streak, badges: allBadges });
+  res.json({ logs: logsFormatted, sessions: sessions.data || [], essays: essays.data || [], streak, badges });
 });
 
 module.exports = router;
