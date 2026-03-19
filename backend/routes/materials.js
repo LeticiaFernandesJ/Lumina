@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const pdf = require('pdf-parse');
 const { geminiGenerate, extractJSON } = require('../utils/gemini');
-const db = require('../db/database');
+const { supabase } = require('../db/database');
 const auth = require('../middleware/auth');
 
 const storage = multer.diskStorage({
@@ -20,21 +20,25 @@ const upload = multer({ storage, fileFilter: (req, file, cb) => {
   else cb(new Error('Apenas PDFs são permitidos'));
 }, limits: { fileSize: 20 * 1024 * 1024 } });
 
-router.get('/', auth, (req, res) => {
-  const materials = db.prepare('SELECT id, title, filename, created_at FROM study_materials WHERE user_id = ? ORDER BY created_at DESC').all(req.userId);
-  res.json(materials);
+router.get('/', auth, async (req, res) => {
+  const sb = supabase();
+  const { data, error } = await sb.from('study_materials').select('id, title, filename, created_at').eq('user_id', req.userId).order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 router.post('/upload', auth, upload.single('pdf'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     const buffer = fs.readFileSync(req.file.path);
-    const data = await pdf(buffer);
+    const pdfData = await pdf(buffer);
     const title = req.body.title || req.file.originalname.replace('.pdf', '');
-    const result = db.prepare('INSERT INTO study_materials (user_id, title, filename, extracted_text) VALUES (?, ?, ?, ?)').run(req.userId, title, req.file.filename, data.text);
+    const sb = supabase();
+    const { data, error } = await sb.from('study_materials').insert({ user_id: req.userId, title, filename: req.file.filename, extracted_text: pdfData.text }).select('id, title, filename, created_at').single();
+    if (error) throw error;
     const today = new Date().toISOString().split('T')[0];
-    db.prepare('INSERT INTO frequency_log (user_id, date, activity_type) VALUES (?, ?, ?)').run(req.userId, today, 'upload_pdf');
-    res.json({ id: result.lastInsertRowid, title, filename: req.file.filename, created_at: new Date().toISOString() });
+    await sb.from('frequency_log').insert({ user_id: req.userId, date: today, activity_type: 'upload_pdf' });
+    res.json(data);
   } catch (e) {
     console.error('Erro upload:', e.message);
     res.status(500).json({ error: e.message });
@@ -44,32 +48,28 @@ router.post('/upload', auth, upload.single('pdf'), async (req, res) => {
 router.post('/:id/generate-flashcards', auth, async (req, res) => {
   try {
     const { count = 10 } = req.body;
-    const material = db.prepare('SELECT * FROM study_materials WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+    const sb = supabase();
+    const { data: material } = await sb.from('study_materials').select('*').eq('id', req.params.id).eq('user_id', req.userId).single();
     if (!material) return res.status(404).json({ error: 'Material não encontrado' });
 
     const textSnippet = (material.extracted_text || '').slice(0, 8000);
     console.log(`Gerando ${count} flashcards para material ${material.id}...`);
 
     const prompt = `Gere exatamente ${count} flashcards de estudo em português brasileiro com base no texto abaixo.
-Retorne SOMENTE um array JSON, sem nenhum texto antes ou depois, sem markdown, sem explicações.
-Formato obrigatório: [{"question": "pergunta aqui", "answer": "resposta aqui"}]
-
-Texto:
-${textSnippet || 'Gere flashcards gerais sobre o tema: ' + material.title}`;
+Retorne SOMENTE um array JSON, sem nenhum texto antes ou depois, sem markdown.
+Formato: [{"question": "pergunta", "answer": "resposta"}]
+Texto: ${textSnippet || 'Gere flashcards sobre: ' + material.title}`;
 
     const raw = await geminiGenerate(process.env.GEMINI_API_KEY, prompt);
-    console.log('Resposta (primeiros 300):', raw.slice(0, 300));
-
     const cards = extractJSON(raw);
-    if (!Array.isArray(cards)) throw new Error('Resposta da IA não é um array');
+    if (!Array.isArray(cards)) throw new Error('Resposta inválida da IA');
 
-    for (const c of cards) {
-      db.prepare('INSERT INTO flashcards (user_id, material_id, question, answer, source_type, topic_name) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(req.userId, material.id, c.question, c.answer, 'pdf', material.title);
-    }
+    const rows = cards.map(c => ({ user_id: req.userId, material_id: material.id, question: c.question, answer: c.answer, source_type: 'pdf', topic_name: material.title }));
+    const { error } = await sb.from('flashcards').insert(rows);
+    if (error) throw error;
 
     const today = new Date().toISOString().split('T')[0];
-    db.prepare('INSERT INTO frequency_log (user_id, date, activity_type) VALUES (?, ?, ?)').run(req.userId, today, 'generate_flashcards');
+    await sb.from('frequency_log').insert({ user_id: req.userId, date: today, activity_type: 'generate_flashcards' });
 
     console.log(`✅ ${cards.length} flashcards inseridos`);
     res.json({ generated: cards.length, cards });
@@ -79,8 +79,9 @@ ${textSnippet || 'Gere flashcards gerais sobre o tema: ' + material.title}`;
   }
 });
 
-router.delete('/:id', auth, (req, res) => {
-  db.prepare('DELETE FROM study_materials WHERE id = ? AND user_id = ?').run(req.params.id, req.userId);
+router.delete('/:id', auth, async (req, res) => {
+  const sb = supabase();
+  await sb.from('study_materials').delete().eq('id', req.params.id).eq('user_id', req.userId);
   res.json({ success: true });
 });
 
