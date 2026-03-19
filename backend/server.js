@@ -22,6 +22,7 @@ initDb().then(() => {
   app.use('/api/plans', require('./routes/plans'));
   app.use('/api/dashboard', require('./routes/dashboard'));
   app.use('/api/users', require('./routes/users'));
+  app.use('/api/progress', require('./routes/progress'));
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`🔥 Lumina Backend rodando na porta ${PORT}`));
