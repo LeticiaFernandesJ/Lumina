@@ -5,13 +5,15 @@ import api from '../utils/api';
 
 function ScoreMeter({ score }) {
   const color = score >= 8 ? '#4CAF50' : score >= 6 ? '#C9A84C' : '#E57373';
+  const circumference = 2 * Math.PI * 60;
+  const dash = (score / 10) * circumference;
   return (
     <div style={{ textAlign: 'center', padding: '24px 0' }}>
       <div style={{ position: 'relative', width: 140, height: 140, margin: '0 auto 16px' }}>
         <svg width="140" height="140" viewBox="0 0 140 140">
           <circle cx="70" cy="70" r="60" fill="none" stroke="#1E1E1E" strokeWidth="10" />
           <circle cx="70" cy="70" r="60" fill="none" stroke={color} strokeWidth="10"
-            strokeDasharray={`${(score / 10) * 376.99} 376.99`} strokeLinecap="round"
+            strokeDasharray={`${dash} ${circumference}`} strokeLinecap="round"
             transform="rotate(-90 70 70)" style={{ transition: 'stroke-dasharray 1s ease' }} />
         </svg>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
@@ -42,12 +44,129 @@ function Accordion({ title, children, defaultOpen }) {
   );
 }
 
+// Seletor de tema com 3 modos
+function TopicSelector({ topic, setTopic, pdfs, plans }) {
+  const [mode, setMode] = useState('digitar'); // digitar | pdf | plano
+
+  const modes = [
+    { id: 'digitar', label: '✏️ Digitar tema' },
+    { id: 'pdf', label: '📄 Usar PDF' },
+    { id: 'plano', label: '📅 Usar Plano' },
+  ];
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ fontSize: 13, color: '#C4B89A', display: 'block', marginBottom: 10 }}>Tema da redação</label>
+
+      {/* Mode tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        {modes.map(m => (
+          <button key={m.id} onClick={() => { setMode(m.id); setTopic(''); }} style={{
+            padding: '7px 14px', borderRadius: 20, border: '1px solid', cursor: 'pointer',
+            fontFamily: 'DM Sans, sans-serif', fontSize: 12, transition: 'all 0.2s',
+            borderColor: mode === m.id ? '#C9A84C' : '#2A2A2A',
+            background: mode === m.id ? 'rgba(201,168,76,0.15)' : '#111',
+            color: mode === m.id ? '#C9A84C' : '#7A7060',
+          }}>{m.label}</button>
+        ))}
+      </div>
+
+      {/* Input por modo */}
+      <AnimatePresence mode="wait">
+        {mode === 'digitar' && (
+          <motion.div key="digitar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+            <input
+              value={topic}
+              onChange={e => setTopic(e.target.value)}
+              placeholder="Ex: Desigualdade educacional no Brasil..."
+            />
+          </motion.div>
+        )}
+
+        {mode === 'pdf' && (
+          <motion.div key="pdf" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+            {pdfs.length === 0 ? (
+              <div style={{ padding: '14px 16px', background: '#111', borderRadius: 10, border: '1px solid #2A2A2A', fontSize: 13, color: '#7A7060' }}>
+                Nenhum PDF enviado ainda. Vá em <strong style={{ color: '#C9A84C' }}>Meus PDFs</strong> para fazer upload.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {pdfs.map(p => (
+                  <button key={p.id} onClick={() => setTopic(p.title)} style={{
+                    textAlign: 'left', padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+                    border: `1px solid ${topic === p.title ? '#C9A84C' : '#2A2A2A'}`,
+                    background: topic === p.title ? 'rgba(201,168,76,0.1)' : '#111',
+                    fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>📄</span>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: topic === p.title ? '#C9A84C' : '#E8DCC8' }}>{p.title}</div>
+                        <div style={{ fontSize: 11, color: '#7A7060', marginTop: 2 }}>
+                          {new Date(p.created_at).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+                      {topic === p.title && <span style={{ marginLeft: 'auto', color: '#C9A84C', fontSize: 16 }}>✓</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {mode === 'plano' && (
+          <motion.div key="plano" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+            {plans.length === 0 ? (
+              <div style={{ padding: '14px 16px', background: '#111', borderRadius: 10, border: '1px solid #2A2A2A', fontSize: 13, color: '#7A7060' }}>
+                Nenhum plano criado ainda. Vá em <strong style={{ color: '#C9A84C' }}>Plano de Estudos</strong> para criar um.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {plans.map(p => (
+                  <button key={p.id} onClick={() => setTopic(p.topic_name)} style={{
+                    textAlign: 'left', padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+                    border: `1px solid ${topic === p.topic_name ? '#C9A84C' : '#2A2A2A'}`,
+                    background: topic === p.topic_name ? 'rgba(201,168,76,0.1)' : '#111',
+                    fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>📅</span>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: topic === p.topic_name ? '#C9A84C' : '#E8DCC8' }}>{p.topic_name}</div>
+                        <div style={{ fontSize: 11, color: '#7A7060', marginTop: 2 }}>
+                          {new Date(p.created_at).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+                      {topic === p.topic_name && <span style={{ marginLeft: 'auto', color: '#C9A84C', fontSize: 16 }}>✓</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Tema selecionado preview */}
+      {topic && mode !== 'digitar' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, color: '#C9A84C', fontWeight: 500 }}>✓ Tema: {topic}</span>
+          <button onClick={() => setTopic('')} style={{ background: 'transparent', color: '#7A7060', border: 'none', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}>✕</button>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
 export default function Redacao() {
   const [topic, setTopic] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [history, setHistory] = useState([]);
+  const [pdfs, setPdfs] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedEssay, setSelectedEssay] = useState(null);
   const toast = useContext(ToastContext);
@@ -56,6 +175,8 @@ export default function Redacao() {
 
   useEffect(() => {
     api.get('/api/essays').then(r => setHistory(r.data)).catch(() => {});
+    api.get('/api/materials').then(r => setPdfs(r.data)).catch(() => {});
+    api.get('/api/plans').then(r => setPlans(r.data)).catch(() => {});
   }, []);
 
   const analyze = async () => {
@@ -97,10 +218,16 @@ export default function Redacao() {
           {/* Editor */}
           <motion.div layout className="card">
             <h2 style={{ fontSize: 18, marginBottom: 20 }}>Editor</h2>
-            <input value={topic} onChange={e => setTopic(e.target.value)} placeholder="Tema da redação..." style={{ marginBottom: 16 }} />
-            <textarea value={content} onChange={e => setContent(e.target.value)}
+
+            {/* Seletor de tema */}
+            <TopicSelector topic={topic} setTopic={setTopic} pdfs={pdfs} plans={plans} />
+
+            <textarea
+              value={content}
+              onChange={e => setContent(e.target.value)}
               placeholder="Escreva sua redação aqui..."
-              style={{ minHeight: 360, resize: 'vertical', lineHeight: 1.8, fontSize: 15 }} />
+              style={{ minHeight: 320, resize: 'vertical', lineHeight: 1.8, fontSize: 15 }}
+            />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
               <span style={{ fontSize: 13, color: wordCount > 300 ? '#4CAF50' : '#7A7060' }}>{wordCount} palavras</span>
               <button onClick={analyze} disabled={loading} className="btn-primary" style={{ padding: '11px 24px' }}>
@@ -117,6 +244,7 @@ export default function Redacao() {
           {feedback && (
             <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="card" style={{ overflowY: 'auto', maxHeight: '80vh' }}>
               <h2 style={{ fontSize: 18, marginBottom: 4 }}>Resultado</h2>
+              <p style={{ fontSize: 13, color: '#7A7060', marginBottom: 4 }}>{topic}</p>
               <ScoreMeter score={feedback.score} />
               <p style={{ color: '#C4B89A', fontSize: 14, lineHeight: 1.7, marginBottom: 20, padding: '14px', background: '#111', borderRadius: 10 }}>{feedback.general_feedback}</p>
 
@@ -175,14 +303,14 @@ export default function Redacao() {
         </div>
       )}
 
-      {/* Selected essay modal */}
+      {/* Modal redação salva */}
       <AnimatePresence>
         {selectedEssay && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: '#161616', border: '1px solid #2A2A2A', borderRadius: 20, padding: 32, maxWidth: 620, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h2 style={{ fontFamily: 'Playfair Display, serif' }}>{selectedEssay.topic_name}</h2>
-                <button onClick={() => setSelectedEssay(null)} style={{ background: 'transparent', color: '#7A7060', fontSize: 20, padding: '4px 8px', cursor: 'pointer', border: 'none', fontFamily: 'DM Sans, sans-serif' }}>✕</button>
+                <button onClick={() => setSelectedEssay(null)} style={{ background: 'transparent', color: '#7A7060', fontSize: 20, padding: '4px 8px', cursor: 'pointer', border: 'none' }}>✕</button>
               </div>
               <ScoreMeter score={selectedEssay.score} />
               {selectedEssay.feedback_json?.general_feedback && (
