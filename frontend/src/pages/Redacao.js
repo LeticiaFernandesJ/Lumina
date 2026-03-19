@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContext } from '../components/Layout';
 import api from '../utils/api';
@@ -45,23 +46,28 @@ function Accordion({ title, children, defaultOpen }) {
 }
 
 // Seletor de tema com 3 modos
-function TopicSelector({ topic, setTopic, pdfs, plans }) {
-  const [mode, setMode] = useState('digitar'); // digitar | pdf | plano
+function TopicSelector({ topic, setTopic, pdfs, plans, loadingPdfs }) {
+  const [mode, setMode] = useState('digitar');
 
   const modes = [
     { id: 'digitar', label: '✏️ Digitar tema' },
-    { id: 'pdf', label: '📄 Usar PDF' },
-    { id: 'plano', label: '📅 Usar Plano' },
+    { id: 'pdf', label: `📄 Usar PDF ${pdfs.length > 0 ? `(${pdfs.length})` : ''}` },
+    { id: 'plano', label: `📅 Usar Plano ${plans.length > 0 ? `(${plans.length})` : ''}` },
   ];
+
+  const formatDate = (val) => {
+    if (!val) return '';
+    try { return new Date(val).toLocaleDateString('pt-BR'); } catch { return ''; }
+  };
 
   return (
     <div style={{ marginBottom: 16 }}>
       <label style={{ fontSize: 13, color: '#C4B89A', display: 'block', marginBottom: 10 }}>Tema da redação</label>
 
-      {/* Mode tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         {modes.map(m => (
-          <button key={m.id} onClick={() => { setMode(m.id); setTopic(''); }} style={{
+          <button key={m.id} onClick={() => { setMode(m.id); if (m.id !== 'digitar') setTopic(''); }} style={{
             padding: '7px 14px', borderRadius: 20, border: '1px solid', cursor: 'pointer',
             fontFamily: 'DM Sans, sans-serif', fontSize: 12, transition: 'all 0.2s',
             borderColor: mode === m.id ? '#C9A84C' : '#2A2A2A',
@@ -71,7 +77,6 @@ function TopicSelector({ topic, setTopic, pdfs, plans }) {
         ))}
       </div>
 
-      {/* Input por modo */}
       <AnimatePresence mode="wait">
         {mode === 'digitar' && (
           <motion.div key="digitar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
@@ -85,31 +90,40 @@ function TopicSelector({ topic, setTopic, pdfs, plans }) {
 
         {mode === 'pdf' && (
           <motion.div key="pdf" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
-            {pdfs.length === 0 ? (
-              <div style={{ padding: '14px 16px', background: '#111', borderRadius: 10, border: '1px solid #2A2A2A', fontSize: 13, color: '#7A7060' }}>
-                Nenhum PDF enviado ainda. Vá em <strong style={{ color: '#C9A84C' }}>Meus PDFs</strong> para fazer upload.
+            {loadingPdfs ? (
+              <div style={{ padding: '20px', textAlign: 'center' }}>
+                <span className="spinner" style={{ width: 24, height: 24 }} />
+              </div>
+            ) : pdfs.length === 0 ? (
+              <div style={{ padding: '16px', background: '#111', borderRadius: 10, border: '1px solid #2A2A2A', fontSize: 13, color: '#7A7060', lineHeight: 1.6 }}>
+                Nenhum PDF encontrado. Vá em <strong style={{ color: '#C9A84C' }}>Meus PDFs</strong> e faça o upload de um arquivo.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {pdfs.map(p => (
-                  <button key={p.id} onClick={() => setTopic(p.title)} style={{
-                    textAlign: 'left', padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
-                    border: `1px solid ${topic === p.title ? '#C9A84C' : '#2A2A2A'}`,
-                    background: topic === p.title ? 'rgba(201,168,76,0.1)' : '#111',
-                    fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 20 }}>📄</span>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: topic === p.title ? '#C9A84C' : '#E8DCC8' }}>{p.title}</div>
-                        <div style={{ fontSize: 11, color: '#7A7060', marginTop: 2 }}>
-                          {new Date(p.created_at).toLocaleDateString('pt-BR')}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 260, overflowY: 'auto' }}>
+                {pdfs.map(p => {
+                  const isSelected = topic === p.title;
+                  return (
+                    <button key={p.id} onClick={() => setTopic(p.title)} style={{
+                      textAlign: 'left', padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+                      border: `1px solid ${isSelected ? '#C9A84C' : '#2A2A2A'}`,
+                      background: isSelected ? 'rgba(201,168,76,0.1)' : '#111',
+                      fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s', width: '100%',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 22, flexShrink: 0 }}>📄</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: isSelected ? '#C9A84C' : '#E8DCC8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {p.title || p.filename || 'Sem título'}
+                          </div>
+                          {p.created_at && (
+                            <div style={{ fontSize: 11, color: '#7A7060', marginTop: 2 }}>{formatDate(p.created_at)}</div>
+                          )}
                         </div>
+                        {isSelected && <span style={{ color: '#C9A84C', fontSize: 18, flexShrink: 0 }}>✓</span>}
                       </div>
-                      {topic === p.title && <span style={{ marginLeft: 'auto', color: '#C9A84C', fontSize: 16 }}>✓</span>}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </motion.div>
@@ -118,41 +132,49 @@ function TopicSelector({ topic, setTopic, pdfs, plans }) {
         {mode === 'plano' && (
           <motion.div key="plano" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
             {plans.length === 0 ? (
-              <div style={{ padding: '14px 16px', background: '#111', borderRadius: 10, border: '1px solid #2A2A2A', fontSize: 13, color: '#7A7060' }}>
-                Nenhum plano criado ainda. Vá em <strong style={{ color: '#C9A84C' }}>Plano de Estudos</strong> para criar um.
+              <div style={{ padding: '16px', background: '#111', borderRadius: 10, border: '1px solid #2A2A2A', fontSize: 13, color: '#7A7060', lineHeight: 1.6 }}>
+                Nenhum plano criado. Vá em <strong style={{ color: '#C9A84C' }}>Plano de Estudos</strong> para criar um.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {plans.map(p => (
-                  <button key={p.id} onClick={() => setTopic(p.topic_name)} style={{
-                    textAlign: 'left', padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
-                    border: `1px solid ${topic === p.topic_name ? '#C9A84C' : '#2A2A2A'}`,
-                    background: topic === p.topic_name ? 'rgba(201,168,76,0.1)' : '#111',
-                    fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 20 }}>📅</span>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: topic === p.topic_name ? '#C9A84C' : '#E8DCC8' }}>{p.topic_name}</div>
-                        <div style={{ fontSize: 11, color: '#7A7060', marginTop: 2 }}>
-                          {new Date(p.created_at).toLocaleDateString('pt-BR')}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 260, overflowY: 'auto' }}>
+                {plans.map(p => {
+                  const isSelected = topic === p.topic_name;
+                  return (
+                    <button key={p.id} onClick={() => setTopic(p.topic_name)} style={{
+                      textAlign: 'left', padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+                      border: `1px solid ${isSelected ? '#C9A84C' : '#2A2A2A'}`,
+                      background: isSelected ? 'rgba(201,168,76,0.1)' : '#111',
+                      fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s', width: '100%',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 22, flexShrink: 0 }}>📅</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: isSelected ? '#C9A84C' : '#E8DCC8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {p.topic_name}
+                          </div>
+                          {p.created_at && (
+                            <div style={{ fontSize: 11, color: '#7A7060', marginTop: 2 }}>{formatDate(p.created_at)}</div>
+                          )}
                         </div>
+                        {isSelected && <span style={{ color: '#C9A84C', fontSize: 18, flexShrink: 0 }}>✓</span>}
                       </div>
-                      {topic === p.topic_name && <span style={{ marginLeft: 'auto', color: '#C9A84C', fontSize: 16 }}>✓</span>}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Tema selecionado preview */}
       {topic && mode !== 'digitar' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 13, color: '#C9A84C', fontWeight: 500 }}>✓ Tema: {topic}</span>
-          <button onClick={() => setTopic('')} style={{ background: 'transparent', color: '#7A7060', border: 'none', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}>✕</button>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{
+          marginTop: 10, padding: '10px 14px', background: 'rgba(201,168,76,0.08)',
+          border: '1px solid rgba(201,168,76,0.25)', borderRadius: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+        }}>
+          <span style={{ fontSize: 13, color: '#C9A84C', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✓ {topic}</span>
+          <button onClick={() => setTopic('')} style={{ background: 'transparent', color: '#7A7060', border: 'none', cursor: 'pointer', fontSize: 16, padding: '2px 6px', flexShrink: 0 }}>✕</button>
         </motion.div>
       )}
     </div>
@@ -160,13 +182,15 @@ function TopicSelector({ topic, setTopic, pdfs, plans }) {
 }
 
 export default function Redacao() {
-  const [topic, setTopic] = useState('');
+  const location = useLocation();
+  const [topic, setTopic] = useState(location.state?.topic || '');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [history, setHistory] = useState([]);
   const [pdfs, setPdfs] = useState([]);
   const [plans, setPlans] = useState([]);
+  const [loadingPdfs, setLoadingPdfs] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedEssay, setSelectedEssay] = useState(null);
   const toast = useContext(ToastContext);
@@ -175,7 +199,7 @@ export default function Redacao() {
 
   useEffect(() => {
     api.get('/api/essays').then(r => setHistory(r.data)).catch(() => {});
-    api.get('/api/materials').then(r => setPdfs(r.data)).catch(() => {});
+    api.get('/api/materials').then(r => { setPdfs(r.data); }).catch(() => {}).finally(() => setLoadingPdfs(false));
     api.get('/api/plans').then(r => setPlans(r.data)).catch(() => {});
   }, []);
 
@@ -220,7 +244,7 @@ export default function Redacao() {
             <h2 style={{ fontSize: 18, marginBottom: 20 }}>Editor</h2>
 
             {/* Seletor de tema */}
-            <TopicSelector topic={topic} setTopic={setTopic} pdfs={pdfs} plans={plans} />
+            <TopicSelector topic={topic} setTopic={setTopic} pdfs={pdfs} plans={plans} loadingPdfs={loadingPdfs} />
 
             <textarea
               value={content}
