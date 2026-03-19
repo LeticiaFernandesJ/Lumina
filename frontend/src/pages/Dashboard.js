@@ -91,7 +91,7 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
+      <div className='stat-grid-responsive' style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 40 }}>
         <StatCard icon="📄" label="PDFs enviados" value={stats?.totalPdfs ?? 0} delay={0} />
         <StatCard icon="🃏" label="Flashcards criados" value={stats?.totalCards ?? 0} delay={0.05} />
         <StatCard icon="🔥" label="Dias seguidos" value={stats?.streak ?? 0} sub="streak atual" delay={0.1} />
