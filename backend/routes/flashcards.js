@@ -1,32 +1,38 @@
 const router = require('express').Router();
-const db = require('../db/database');
+const { supabase } = require('../db/database');
 const auth = require('../middleware/auth');
 
-router.get('/', auth, (req, res) => {
+router.get('/', auth, async (req, res) => {
+  const sb = supabase();
   const { material_id, topic } = req.query;
-  let query = 'SELECT f.*, sm.title as material_title FROM flashcards f LEFT JOIN study_materials sm ON f.material_id = sm.id WHERE f.user_id = ?';
-  const params = [req.userId];
-  if (material_id) { query += ' AND f.material_id = ?'; params.push(material_id); }
-  if (topic) { query += ' AND f.topic_name LIKE ?'; params.push(`%${topic}%`); }
-  query += ' ORDER BY f.created_at DESC';
-  res.json(db.prepare(query).all(...params));
+  let query = sb.from('flashcards').select('*, study_materials(title)').eq('user_id', req.userId).order('created_at', { ascending: false });
+  if (material_id) query = query.eq('material_id', material_id);
+  if (topic) query = query.ilike('topic_name', `%${topic}%`);
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-router.post('/session', auth, (req, res) => {
+router.get('/topics', auth, async (req, res) => {
+  const sb = supabase();
+  const { data } = await sb.from('flashcards').select('topic_name').eq('user_id', req.userId).not('topic_name', 'is', null);
+  const unique = [...new Set((data || []).map(r => r.topic_name).filter(Boolean))];
+  res.json(unique);
+});
+
+router.post('/session', auth, async (req, res) => {
   const { duration_minutes, topic, cards_reviewed, score_percent } = req.body;
-  const result = db.prepare('INSERT INTO study_sessions (user_id, duration_minutes, topic, cards_reviewed, score_percent) VALUES (?, ?, ?, ?, ?)').run(req.userId, duration_minutes, topic, cards_reviewed, score_percent);
+  const sb = supabase();
+  const { data, error } = await sb.from('study_sessions').insert({ user_id: req.userId, duration_minutes, topic, cards_reviewed, score_percent }).select('id').single();
+  if (error) return res.status(500).json({ error: error.message });
   const today = new Date().toISOString().split('T')[0];
-  db.prepare('INSERT INTO frequency_log (user_id, date, activity_type) VALUES (?, ?, ?)').run(req.userId, today, 'flashcard_session');
-  res.json({ id: result.lastInsertRowid });
+  await sb.from('frequency_log').insert({ user_id: req.userId, date: today, activity_type: 'flashcard_session' });
+  res.json({ id: data.id });
 });
 
-router.get('/topics', auth, (req, res) => {
-  const topics = db.prepare('SELECT DISTINCT topic_name FROM flashcards WHERE user_id = ? AND topic_name IS NOT NULL').all(req.userId);
-  res.json(topics.map(t => t.topic_name));
-});
-
-router.delete('/:id', auth, (req, res) => {
-  db.prepare('DELETE FROM flashcards WHERE id = ? AND user_id = ?').run(req.params.id, req.userId);
+router.delete('/:id', auth, async (req, res) => {
+  const sb = supabase();
+  await sb.from('flashcards').delete().eq('id', req.params.id).eq('user_id', req.userId);
   res.json({ success: true });
 });
 
