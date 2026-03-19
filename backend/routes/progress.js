@@ -1,77 +1,66 @@
 const router = require('express').Router();
-const db = require('../db/database');
+const { supabase } = require('../db/database');
 const auth = require('../middleware/auth');
 
-// Busca todo o progresso de um plano
-router.get('/:planId', auth, (req, res) => {
-  try {
-    const { planId } = req.params;
-    const tasks = db.prepare('SELECT week_idx, task_idx, done FROM plan_progress WHERE user_id = ? AND plan_id = ?').all(req.userId, planId);
-    const weeks = db.prepare('SELECT week_idx, has_flashcards, has_essay FROM plan_week_status WHERE user_id = ? AND plan_id = ?').all(req.userId, planId);
+router.get('/:planId', auth, async (req, res) => {
+  const sb = supabase();
+  const { planId } = req.params;
 
-    // Monta objeto checked: { weekIdx: { taskIdx: true/false } }
-    const checked = {};
-    tasks.forEach(t => {
-      if (!checked[t.week_idx]) checked[t.week_idx] = {};
-      checked[t.week_idx][t.task_idx] = t.done === 1;
-    });
+  const [tasksRes, weeksRes] = await Promise.all([
+    sb.from('plan_progress').select('week_idx, task_idx, done').eq('user_id', req.userId).eq('plan_id', planId),
+    sb.from('plan_week_status').select('week_idx, has_flashcards, has_essay').eq('user_id', req.userId).eq('plan_id', planId),
+  ]);
 
-    const hasFlashcards = {};
-    const hasEssay = {};
-    weeks.forEach(w => {
-      hasFlashcards[w.week_idx] = w.has_flashcards === 1;
-      hasEssay[w.week_idx] = w.has_essay === 1;
-    });
+  const checked = {};
+  (tasksRes.data || []).forEach(t => {
+    if (!checked[t.week_idx]) checked[t.week_idx] = {};
+    checked[t.week_idx][t.task_idx] = t.done;
+  });
 
-    res.json({ checked, hasFlashcards, hasEssay });
-  } catch (e) {
-    console.error('Erro get progress:', e.message);
-    res.status(500).json({ error: e.message });
-  }
+  const hasFlashcards = {};
+  const hasEssay = {};
+  (weeksRes.data || []).forEach(w => {
+    hasFlashcards[w.week_idx] = w.has_flashcards;
+    hasEssay[w.week_idx] = w.has_essay;
+  });
+
+  res.json({ checked, hasFlashcards, hasEssay });
 });
 
-// Salva estado de uma tarefa
-router.post('/:planId/task', auth, (req, res) => {
+router.post('/:planId/task', auth, async (req, res) => {
   try {
     const { planId } = req.params;
     const { weekIdx, taskIdx, done } = req.body;
+    const sb = supabase();
 
-    db.prepare(`
-      INSERT INTO plan_progress (user_id, plan_id, week_idx, task_idx, done)
-      VALUES (?, ?, ?, ?, ?)
-      ON CONFLICT(user_id, plan_id, week_idx, task_idx)
-      DO UPDATE SET done = excluded.done, updated_at = CURRENT_TIMESTAMP
-    `).run(req.userId, planId, weekIdx, taskIdx, done ? 1 : 0);
+    await sb.from('plan_progress').upsert({
+      user_id: req.userId, plan_id: planId, week_idx: weekIdx, task_idx: taskIdx, done,
+    }, { onConflict: 'user_id,plan_id,week_idx,task_idx' });
 
     res.json({ success: true });
   } catch (e) {
-    console.error('Erro save task:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
 
-// Salva status de flashcards/redação de uma semana
-router.post('/:planId/week', auth, (req, res) => {
+router.post('/:planId/week', auth, async (req, res) => {
   try {
     const { planId } = req.params;
     const { weekIdx, has_flashcards, has_essay } = req.body;
+    const sb = supabase();
 
-    // Busca estado atual
-    const current = db.prepare('SELECT * FROM plan_week_status WHERE user_id = ? AND plan_id = ? AND week_idx = ?').get(req.userId, planId, weekIdx);
+    const { data: current } = await sb.from('plan_week_status').select('*').eq('user_id', req.userId).eq('plan_id', planId).eq('week_idx', weekIdx).single();
 
-    const newFlashcards = has_flashcards !== undefined ? (has_flashcards ? 1 : 0) : (current?.has_flashcards ?? 0);
-    const newEssay = has_essay !== undefined ? (has_essay ? 1 : 0) : (current?.has_essay ?? 0);
-
-    db.prepare(`
-      INSERT INTO plan_week_status (user_id, plan_id, week_idx, has_flashcards, has_essay)
-      VALUES (?, ?, ?, ?, ?)
-      ON CONFLICT(user_id, plan_id, week_idx)
-      DO UPDATE SET has_flashcards = excluded.has_flashcards, has_essay = excluded.has_essay, updated_at = CURRENT_TIMESTAMP
-    `).run(req.userId, planId, weekIdx, newFlashcards, newEssay);
+    await sb.from('plan_week_status').upsert({
+      user_id: req.userId,
+      plan_id: planId,
+      week_idx: weekIdx,
+      has_flashcards: has_flashcards !== undefined ? has_flashcards : (current?.has_flashcards ?? false),
+      has_essay: has_essay !== undefined ? has_essay : (current?.has_essay ?? false),
+    }, { onConflict: 'user_id,plan_id,week_idx' });
 
     res.json({ success: true });
   } catch (e) {
-    console.error('Erro save week:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
