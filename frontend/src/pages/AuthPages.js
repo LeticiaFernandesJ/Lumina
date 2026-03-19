@@ -57,7 +57,7 @@ export function LoginPage() {
         transition={{ duration: 0.5 }}
         style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, padding: '0 24px' }}
       >
-        <div style={{ background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(20px)', border: '1px solid #222', borderRadius: 24, padding: '48px 40px' }}>
+        <div style={{ background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(20px)', border: '1px solid #222', borderRadius: 24, padding: 'clamp(24px, 5vw, 48px) clamp(20px, 5vw, 40px)' }}>
           <LuminaLogo />
           <p style={{ textAlign: 'center', color: '#7A7060', fontSize: 14, marginBottom: 36, fontFamily: 'DM Sans, sans-serif' }}>
             Sua plataforma de estudos com IA
@@ -118,7 +118,7 @@ export function RegisterPage() {
         transition={{ duration: 0.5 }}
         style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, padding: '0 24px' }}
       >
-        <div style={{ background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(20px)', border: '1px solid #222', borderRadius: 24, padding: '48px 40px' }}>
+        <div style={{ background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(20px)', border: '1px solid #222', borderRadius: 24, padding: 'clamp(24px, 5vw, 48px) clamp(20px, 5vw, 40px)' }}>
           <LuminaLogo />
           <p style={{ textAlign: 'center', color: '#7A7060', fontSize: 14, marginBottom: 36, fontFamily: 'DM Sans, sans-serif' }}>
             Crie sua conta e comece a estudar
