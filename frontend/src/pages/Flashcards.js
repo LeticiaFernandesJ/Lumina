@@ -17,18 +17,17 @@ function generateOptions(correctAnswer, allCards) {
 
 function FlipCard({ card, allCards, onEvaluate }) {
   const [flipped, setFlipped] = useState(false);
-  const [selected, setSelected] = useState(null); // resposta escolhida
+  const [selected, setSelected] = useState(null);
   const [options] = useState(() => generateOptions(card.answer, allCards));
-  const [result, setResult] = useState(null); // 'correct' | 'wrong'
+  const [result, setResult] = useState(null);
+  const [cardHeight, setCardHeight] = useState(180);
 
   const handleSelect = (opt) => {
-    if (selected) return; // já respondeu
+    if (selected) return;
     setSelected(opt);
     const isCorrect = opt === card.answer;
     setResult(isCorrect ? 'correct' : 'wrong');
-    // Vira o card automaticamente após 600ms
     setTimeout(() => setFlipped(true), 600);
-    // Após virar, avalia automaticamente após 1.5s
     setTimeout(() => onEvaluate(isCorrect ? 2 : 0, isCorrect), 2200);
   };
 
@@ -56,24 +55,38 @@ function FlipCard({ card, allCards, onEvaluate }) {
 
   const letters = ['A', 'B', 'C', 'D'];
 
+  // Calcula altura dinâmica baseada no conteúdo
+  const estimatedHeight = Math.max(180, Math.ceil(card.question.length / 40) * 24 + 100);
+
   return (
     <div style={{ width: '100%', maxWidth: 580, margin: '0 auto' }}>
       {/* Card com flip */}
-      <div style={{ perspective: 1000, height: 180, marginBottom: 20 }}>
+      <div style={{ perspective: 1000, minHeight: estimatedHeight, height: estimatedHeight, marginBottom: 20 }}>
         <motion.div
           animate={{ rotateY: flipped ? 180 : 0 }}
           transition={{ duration: 0.55, type: 'spring', stiffness: 180, damping: 22 }}
-          style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            transformStyle: 'preserve-3d',
+          }}
         >
           {/* Frente — pergunta */}
           <div style={{
             position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
             background: '#161616', border: '1px solid #2A2A2A', borderRadius: 16,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            padding: '24px 32px', textAlign: 'center',
+            padding: '24px 20px', textAlign: 'center',
+            overflow: 'hidden',
           }}>
             <div style={{ fontSize: 10, color: '#C9A84C', fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14 }}>Pergunta</div>
-            <div style={{ fontSize: 17, fontFamily: 'Playfair Display, serif', lineHeight: 1.5, color: '#E8DCC8' }}>{card.question}</div>
+            <div style={{
+              fontSize: 17, fontFamily: 'Playfair Display, serif', lineHeight: 1.5, color: '#E8DCC8',
+              wordBreak: 'break-word', overflowWrap: 'break-word', width: '100%',
+            }}>
+              {card.question}
+            </div>
           </div>
 
           {/* Verso — resposta + resultado */}
@@ -84,8 +97,10 @@ function FlipCard({ card, allCards, onEvaluate }) {
               ? 'linear-gradient(135deg, rgba(76,175,80,0.1), rgba(76,175,80,0.04))'
               : 'linear-gradient(135deg, rgba(229,115,115,0.1), rgba(229,115,115,0.04))',
             border: `1px solid ${result === 'correct' ? 'rgba(76,175,80,0.35)' : 'rgba(229,115,115,0.35)'}`,
-            borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', padding: '24px 32px', textAlign: 'center',
+            borderRadius: 16,
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', padding: '20px 20px', textAlign: 'center',
+            overflow: 'hidden',
           }}>
             <div style={{ fontSize: 28, marginBottom: 10 }}>
               {result === 'correct' ? '🎉' : '💡'}
@@ -93,7 +108,12 @@ function FlipCard({ card, allCards, onEvaluate }) {
             <div style={{ fontSize: 13, fontWeight: 700, color: result === 'correct' ? '#4CAF50' : '#E57373', marginBottom: 8, letterSpacing: 1 }}>
               {result === 'correct' ? 'CORRETO!' : 'RESPOSTA CORRETA:'}
             </div>
-            <div style={{ fontSize: 14, color: '#E8DCC8', lineHeight: 1.6 }}>{card.answer}</div>
+            <div style={{
+              fontSize: 14, color: '#E8DCC8', lineHeight: 1.6,
+              wordBreak: 'break-word', overflowWrap: 'break-word', width: '100%',
+            }}>
+              {card.answer}
+            </div>
           </div>
         </motion.div>
       </div>
@@ -110,15 +130,15 @@ function FlipCard({ card, allCards, onEvaluate }) {
           >
             <span style={{
               minWidth: 26, height: 26, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 700,
+              fontSize: 11, fontWeight: 700, flexShrink: 0,
               background: selected && opt === card.answer ? '#4CAF5020' : selected && opt === selected && opt !== card.answer ? '#E5737320' : 'rgba(201,168,76,0.1)',
               color: selected && opt === card.answer ? '#4CAF50' : selected && opt === selected && opt !== card.answer ? '#E57373' : '#C9A84C',
             }}>
               {letters[i]}
             </span>
-            <span style={{ flex: 1, lineHeight: 1.4 }}>{opt}</span>
-            {selected && opt === card.answer && <span style={{ color: '#4CAF50', fontSize: 16 }}>✓</span>}
-            {selected && opt === selected && opt !== card.answer && <span style={{ color: '#E57373', fontSize: 16 }}>✗</span>}
+            <span style={{ flex: 1, lineHeight: 1.4, wordBreak: 'break-word', overflowWrap: 'break-word' }}>{opt}</span>
+            {selected && opt === card.answer && <span style={{ color: '#4CAF50', fontSize: 16, flexShrink: 0 }}>✓</span>}
+            {selected && opt === selected && opt !== card.answer && <span style={{ color: '#E57373', fontSize: 16, flexShrink: 0 }}>✗</span>}
           </motion.button>
         ))}
       </div>
@@ -253,7 +273,7 @@ export default function Flashcards() {
   const [topics, setTopics] = useState([]);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState('browse'); // browse | review | result
+  const [mode, setMode] = useState('browse');
   const [sessionResult, setSessionResult] = useState(null);
   const [sessionCards, setSessionCards] = useState([]);
   const toast = useContext(ToastContext);
