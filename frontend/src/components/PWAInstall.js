@@ -45,19 +45,18 @@ export default function PWAInstall() {
           style={{
             position: 'fixed',
             bottom: 20,
-            left: 0,
-            right: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
             zIndex: 9999,
-            display: 'flex',
-            justifyContent: 'center',
+            width: '100%',
+            maxWidth: 440,
             padding: '0 16px',
             pointerEvents: 'none',
           }}
         >
-          {/* Card interno — centralizado e com largura máxima */}
+          {/* Card interno */}
           <div style={{
             width: '100%',
-            maxWidth: 440,
             background: '#1A1A1A',
             border: '1px solid rgba(201,168,76,0.4)',
             borderRadius: 14,
