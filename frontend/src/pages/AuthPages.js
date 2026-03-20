@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import ParticleBackground from '../components/ParticleBackground';
-import { InstallAppButton } from '../components/PWAInstall';
 import { useToast } from '../hooks/useToast';
 import ToastContainer from '../components/Toast';
 
@@ -82,7 +81,6 @@ export function LoginPage() {
             Não tem conta?{' '}
             <Link to="/register" style={{ color: '#C9A84C', fontWeight: 500 }}>Cadastre-se</Link>
           </p>
-          <InstallAppButton />
         </div>
       </motion.div>
     </div>
@@ -148,7 +146,6 @@ export function RegisterPage() {
             Já tem conta?{' '}
             <Link to="/login" style={{ color: '#C9A84C', fontWeight: 500 }}>Entrar</Link>
           </p>
-          <InstallAppButton />
         </div>
       </motion.div>
     </div>
