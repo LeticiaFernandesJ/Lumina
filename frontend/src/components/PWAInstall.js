@@ -35,106 +35,122 @@ export default function PWAInstall() {
   if (!prompt) return null;
 
   return (
-    <>
-      <style>{`
-        .pwa-banner {
-          position: fixed;
-          bottom: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: calc(100vw - 32px);
-          max-width: 480px;
-          z-index: 9000;
-          background: #1A1A1A;
-          border: 1px solid rgba(201,168,76,0.35);
-          border-radius: 16px;
-          padding: 14px 16px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          box-sizing: border-box;
-        }
-        @supports (padding-bottom: env(safe-area-inset-bottom)) {
-          .pwa-banner {
-            bottom: calc(16px + env(safe-area-inset-bottom));
-          }
-        }
-        .pwa-btn-no {
-          background: transparent;
-          border: 1px solid #2A2A2A;
-          color: #7A7060;
-          border-radius: 8px;
-          padding: 8px 14px;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          cursor: pointer;
-          flex-shrink: 0;
-          min-height: 40px;
-          white-space: nowrap;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .pwa-btn-yes {
-          background: linear-gradient(135deg, #C9A84C, #E6C56B);
-          border: none;
-          color: #0A0A0A;
-          border-radius: 8px;
-          padding: 8px 16px;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 700;
-          font-size: 13px;
-          cursor: pointer;
-          flex-shrink: 0;
-          min-height: 40px;
-          white-space: nowrap;
-          -webkit-tap-highlight-color: transparent;
-        }
-      `}</style>
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 30 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+          style={{
+            position: 'fixed',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            width: 'min(calc(100vw - 32px), 440px)',
+            background: '#1A1A1A',
+            border: '1px solid rgba(201,168,76,0.4)',
+            borderRadius: 14,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Linha dourada topo */}
+          <div style={{ height: 2, background: 'linear-gradient(90deg, #C9A84C, #E6C56B, #C9A84C)' }} />
 
-      <AnimatePresence>
-        {show && (
-          <motion.div
-            className="pwa-banner"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '12px 14px',
+          }}>
             {/* Ícone */}
             <div style={{
-              width: 44, height: 44, borderRadius: 10,
-              background: '#0E0E0E', border: '1px solid #2A2A2A',
+              width: 40, height: 40,
+              borderRadius: 10,
+              background: '#111',
+              border: '1px solid #2A2A2A',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>
-              <svg width="24" height="24" viewBox="0 0 36 36">
+              <svg width="22" height="22" viewBox="0 0 36 36">
                 <defs>
-                  <linearGradient id="fg4" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <linearGradient id="pwaFg" x1="0%" y1="100%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#C9A84C"/>
                     <stop offset="100%" stopColor="#E6C56B"/>
                   </linearGradient>
                 </defs>
-                <path d="M18 4 C18 4 12 12 12 18 C12 22 14 25 16 26 C15 23 16 20 18 19 C20 20 21 23 20 26 C22 25 24 22 24 18 C24 12 18 4 18 4Z" fill="url(#fg4)"/>
-                <ellipse cx="18" cy="28" rx="5" ry="2" fill="url(#fg4)" opacity="0.4"/>
+                <path d="M18 4C18 4 12 12 12 18c0 4 2 7 4 8-1-3 0-6 2-7 2 1 3 4 2 7 2-1 4-4 4-8 0-6-6-14-6-14z" fill="url(#pwaFg)"/>
+                <ellipse cx="18" cy="28" rx="5" ry="2" fill="url(#pwaFg)" opacity="0.4"/>
               </svg>
             </div>
 
             {/* Texto */}
-            <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#E8DCC8', fontFamily: 'DM Sans, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: '#E8DCC8',
+                fontFamily: 'DM Sans, sans-serif',
+                lineHeight: 1.3,
+              }}>
                 Instalar Lumina
               </div>
-              <div style={{ fontSize: 12, color: '#7A7060', fontFamily: 'DM Sans, sans-serif', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{
+                fontSize: 11,
+                color: '#7A7060',
+                fontFamily: 'DM Sans, sans-serif',
+                marginTop: 2,
+                lineHeight: 1.3,
+              }}>
                 Adicionar à tela inicial
               </div>
             </div>
 
-            {/* Botões */}
-            <button className="pwa-btn-no" onClick={handleDismiss}>Não</button>
-            <button className="pwa-btn-yes" onClick={handleInstall}>Instalar</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+            {/* Botões lado a lado */}
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button
+                onClick={handleDismiss}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #333',
+                  color: '#7A7060',
+                  borderRadius: 8,
+                  padding: '0 12px',
+                  height: 36,
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                Agora não
+              </button>
+              <button
+                onClick={handleInstall}
+                style={{
+                  background: 'linear-gradient(135deg, #C9A84C, #E6C56B)',
+                  border: 'none',
+                  color: '#0A0A0A',
+                  borderRadius: 8,
+                  padding: '0 16px',
+                  height: 36,
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                Instalar
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
