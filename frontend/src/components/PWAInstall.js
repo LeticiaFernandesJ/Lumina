@@ -9,13 +9,11 @@ export default function PWAInstall() {
     const dismissed = localStorage.getItem('pwa_dismissed');
     if (dismissed && Date.now() - parseInt(dismissed) < 86400000) return;
 
-    // Se o prompt já foi capturado no index.html, mostra direto
     if (window.__pwaPrompt) {
       setTimeout(() => setShow(true), 2000);
       return;
     }
 
-    // Fallback: caso o evento ainda não tenha disparado
     const handler = (e) => {
       e.preventDefault();
       window.__pwaPrompt = e;
@@ -44,38 +42,45 @@ export default function PWAInstall() {
       <style>{`
         .pwa-wrapper {
           position: fixed;
-          bottom: 16px;
+          /* ocupa toda a largura menos 16px de cada lado */
           left: 16px;
           right: 16px;
+          bottom: 16px;
           z-index: 99999;
+          pointer-events: none;
+          /* centraliza o card quando há espaço (desktop) */
           display: flex;
           justify-content: center;
-          pointer-events: none;
         }
-        .pwa-inner {
+
+        .pwa-card {
+          pointer-events: auto;
+          /* no mobile ocupa tudo; no desktop limita a 440px */
           width: 100%;
           max-width: 440px;
-          pointer-events: auto;
           background: #1A1A1A;
           border: 1px solid rgba(201,168,76,0.4);
           border-radius: 14px;
           overflow: hidden;
           box-shadow: 0 8px 32px rgba(0,0,0,0.6);
         }
+
         .pwa-topline {
           height: 2px;
           background: linear-gradient(90deg, #C9A84C, #E6C56B, #C9A84C);
         }
+
         .pwa-body {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 12px 14px;
+          gap: 10px;
+          padding: 12px 12px;
         }
+
         .pwa-icon-box {
-          width: 40px;
-          min-width: 40px;
-          height: 40px;
+          width: 38px;
+          min-width: 38px;
+          height: 38px;
           border-radius: 10px;
           background: #111;
           border: 1px solid #2A2A2A;
@@ -83,55 +88,75 @@ export default function PWAInstall() {
           align-items: center;
           justify-content: center;
         }
+
         .pwa-texts {
           flex: 1;
           min-width: 0;
         }
+
         .pwa-title {
           font-size: 13px;
           font-weight: 700;
           color: #E8DCC8;
           font-family: 'DM Sans', sans-serif;
           line-height: 1.3;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
+
         .pwa-sub {
           font-size: 11px;
           color: #7A7060;
           font-family: 'DM Sans', sans-serif;
           margin-top: 2px;
           line-height: 1.3;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
+
         .pwa-btns {
           display: flex;
-          gap: 8px;
+          gap: 6px;
           flex-shrink: 0;
         }
+
         .pwa-btn-no {
           background: transparent;
           border: 1px solid #333;
           color: #7A7060;
           border-radius: 8px;
-          padding: 0 12px;
-          height: 34px;
+          padding: 0 10px;
+          height: 32px;
           font-family: 'DM Sans', sans-serif;
           font-size: 12px;
           cursor: pointer;
           white-space: nowrap;
           -webkit-tap-highlight-color: transparent;
         }
+
         .pwa-btn-yes {
           background: linear-gradient(135deg, #C9A84C, #E6C56B);
           border: none;
           color: #0A0A0A;
           border-radius: 8px;
-          padding: 0 16px;
-          height: 34px;
+          padding: 0 14px;
+          height: 32px;
           font-family: 'DM Sans', sans-serif;
           font-weight: 700;
           font-size: 12px;
           cursor: pointer;
           white-space: nowrap;
           -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Telas muito pequenas: reduz texto dos botões */
+        @media (max-width: 360px) {
+          .pwa-btn-no  { font-size: 11px; padding: 0 8px; }
+          .pwa-btn-yes { font-size: 11px; padding: 0 10px; }
+          .pwa-title   { font-size: 12px; }
+          .pwa-sub     { font-size: 10px; }
         }
       `}</style>
 
@@ -139,7 +164,7 @@ export default function PWAInstall() {
         {show && (
           <div className="pwa-wrapper">
             <motion.div
-              className="pwa-inner"
+              className="pwa-card"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 40 }}
@@ -147,16 +172,17 @@ export default function PWAInstall() {
             >
               <div className="pwa-topline" />
               <div className="pwa-body">
+
                 <div className="pwa-icon-box">
-                  <svg width="22" height="22" viewBox="0 0 36 36">
+                  <svg width="20" height="20" viewBox="0 0 36 36">
                     <defs>
-                      <linearGradient id="pwaG2" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <linearGradient id="pwaGrad" x1="0%" y1="100%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#C9A84C"/>
                         <stop offset="100%" stopColor="#E6C56B"/>
                       </linearGradient>
                     </defs>
-                    <path d="M18 4C18 4 12 12 12 18c0 4 2 7 4 8-1-3 0-6 2-7 2 1 3 4 2 7 2-1 4-4 4-8 0-6-6-14-6-14z" fill="url(#pwaG2)"/>
-                    <ellipse cx="18" cy="28" rx="5" ry="2" fill="url(#pwaG2)" opacity="0.4"/>
+                    <path d="M18 4C18 4 12 12 12 18c0 4 2 7 4 8-1-3 0-6 2-7 2 1 3 4 2 7 2-1 4-4 4-8 0-6-6-14-6-14z" fill="url(#pwaGrad)"/>
+                    <ellipse cx="18" cy="28" rx="5" ry="2" fill="url(#pwaGrad)" opacity="0.4"/>
                   </svg>
                 </div>
 
@@ -169,6 +195,7 @@ export default function PWAInstall() {
                   <button className="pwa-btn-no" onClick={handleDismiss}>Agora não</button>
                   <button className="pwa-btn-yes" onClick={handleInstall}>Instalar</button>
                 </div>
+
               </div>
             </motion.div>
           </div>
