@@ -5,19 +5,6 @@ import { ToastContext } from '../components/Layout';
 import api from '../utils/api';
 import { Modal, ModalHeader, ModalButton, ModalFooter, ModalInfo, ConfirmModal, useModal } from '../components/Modal';
 
-function ConfirmModal({ message, onConfirm, onCancel }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: '#161616', border: '1px solid #2A2A2A', borderRadius: 16, padding: 28, maxWidth: 380, width: '100%' }}>
-        <h3 style={{ marginBottom: 14, fontFamily: 'Playfair Display, serif', fontSize: 20 }}>Confirmar ação</h3>
-        <p style={{ color: '#C4B89A', marginBottom: 22, fontSize: 14, lineHeight: 1.6 }}>{message}</p>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={onCancel} className="btn-secondary" style={{ flex: 1 }}>Cancelar</button>
-          <button onClick={onConfirm} style={{ flex: 1, background: '#E57373', color: '#fff', border: 'none', borderRadius: 10, padding: '11px', fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: 'pointer' }}>Excluir</button>
-        </div>
-      </motion.div>
-    </div>
-  );
 }
 
 function FlashcardModal({ material, onClose, onGenerated }) {
