@@ -1,61 +1,44 @@
-const CACHE_NAME = 'lumina-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-];
+var CACHE = 'lumina-v2';
+var STATIC = ['/', '/index.html', '/manifest.json', '/icons/icon-192x192.png', '/icons/icon-512x512.png'];
 
-// Instala e faz cache dos assets estáticos
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
+self.addEventListener('install', function(e) {
+  e.waitUntil(caches.open(CACHE).then(function(c) { return c.addAll(STATIC); }));
   self.skipWaiting();
 });
 
-// Ativa e limpa caches antigos
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    )
+self.addEventListener('activate', function(e) {
+  e.waitUntil(
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.filter(function(k) { return k !== CACHE; }).map(function(k) { return caches.delete(k); }));
+    })
   );
   self.clients.claim();
 });
 
-// Estratégia: Network First para API, Cache First para estáticos
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+self.addEventListener('fetch', function(e) {
+  var url = new URL(e.request.url);
 
-  // Chamadas de API — sempre busca na rede, sem cache
-  if (url.pathname.startsWith('/api/') || url.hostname.includes('railway.app') || url.hostname.includes('supabase.co')) {
-    event.respondWith(fetch(event.request));
+  // API e Supabase: sempre busca na rede
+  if (url.pathname.startsWith('/api/') ||
+      url.hostname.includes('railway.app') ||
+      url.hostname.includes('supabase.co') ||
+      url.hostname.includes('googleapis.com')) {
+    e.respondWith(fetch(e.request));
     return;
   }
 
-  // Assets estáticos — Cache First
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
+  // Estáticos: cache first
+  e.respondWith(
+    caches.match(e.request).then(function(cached) {
       if (cached) return cached;
-
-      return fetch(event.request).then((response) => {
-        // Só faz cache de respostas válidas
+      return fetch(e.request).then(function(response) {
         if (response && response.status === 200 && response.type === 'basic') {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+          var clone = response.clone();
+          caches.open(CACHE).then(function(c) { c.put(e.request, clone); });
         }
         return response;
-      }).catch(() => {
-        // Offline fallback
-        if (event.request.destination === 'document') {
+      }).catch(function() {
+        if (e.request.destination === 'document') {
           return caches.match('/index.html');
         }
       });

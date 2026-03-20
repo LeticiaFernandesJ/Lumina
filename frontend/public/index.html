@@ -3,45 +3,40 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <meta name="theme-color" content="#C9A84C" />
-    <meta name="description" content="Lumina — Plataforma de estudos com IA. Flashcards, redações e planos de estudo personalizados." />
 
+    <!-- PWA / Theme -->
+    <meta name="theme-color" content="#0A0A0A" />
+    <meta name="description" content="Lumina — Sua plataforma de estudos com IA" />
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Android -->
     <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Lumina" />
-
-    <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
-    <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-72x72.png" />
-    <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96x96.png" />
-    <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128x128.png" />
-    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png" />
+    <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128x128.png" />
 
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.png" />
 
+    <!-- MS Tile -->
     <meta name="msapplication-TileColor" content="#0A0A0A" />
     <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
-
-    <meta property="og:title" content="Lumina — Estudos com IA" />
-    <meta property="og:description" content="Flashcards, redações corrigidas por IA e planos de estudo personalizados." />
-    <meta property="og:image" content="/icons/icon-512x512.png" />
-    <meta property="og:type" content="website" />
 
     <title>Lumina</title>
 
     <style>
       #splash {
-        position: fixed;
-        inset: 0;
+        position: fixed; inset: 0;
         background: #0A0A0A;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
         z-index: 9999;
         transition: opacity 0.4s ease;
       }
@@ -49,20 +44,13 @@
       #splash svg { animation: pulse 1.5s ease-in-out infinite; }
       #splash-title {
         font-family: Georgia, serif;
-        font-size: 28px;
-        font-weight: 700;
+        font-size: 28px; font-weight: 700;
         background: linear-gradient(135deg, #C9A84C, #E6C56B);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-top: 16px;
-        letter-spacing: 2px;
+        margin-top: 16px; letter-spacing: 2px;
       }
-      #splash-sub {
-        font-family: sans-serif;
-        font-size: 13px;
-        color: #7A7060;
-        margin-top: 8px;
-      }
+      #splash-sub { font-family: sans-serif; font-size: 13px; color: #7A7060; margin-top: 8px; }
       @keyframes pulse {
         0%, 100% { transform: scale(1); opacity: 1; }
         50% { transform: scale(1.06); opacity: 0.85; }
@@ -71,14 +59,14 @@
   </head>
   <body>
     <div id="splash">
-      <svg width="80" height="80" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+      <svg width="72" height="72" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="fg" x1="0%" y1="100%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#C9A84C"/>
             <stop offset="100%" stop-color="#E6C56B"/>
           </linearGradient>
         </defs>
-        <path d="M18 4 C18 4 12 12 12 18 C12 22 14 25 16 26 C15 23 16 20 18 19 C20 20 21 23 20 26 C22 25 24 22 24 18 C24 12 18 4 18 4Z" fill="url(#fg)"/>
+        <path d="M18 4C18 4 12 12 12 18C12 22 14 25 16 26C15 23 16 20 18 19C20 20 21 23 20 26C22 25 24 22 24 18C24 12 18 4 18 4Z" fill="url(#fg)"/>
         <ellipse cx="18" cy="28" rx="5" ry="2" fill="url(#fg)" opacity="0.4"/>
       </svg>
       <div id="splash-title">Lumina</div>
@@ -89,23 +77,21 @@
     <div id="root"></div>
 
     <script>
-      window.addEventListener('load', () => {
-        setTimeout(() => {
-          const splash = document.getElementById('splash');
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var splash = document.getElementById('splash');
           if (splash) {
             splash.classList.add('hidden');
-            setTimeout(() => splash.remove(), 400);
+            setTimeout(function() { splash.remove(); }, 400);
           }
-        }, 800);
-      });
+        }, 600);
 
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+        if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registrado:', reg.scope))
-            .catch(err => console.log('SW erro:', err));
-        });
-      }
+            .then(function(reg) { console.log('SW registrado:', reg.scope); })
+            .catch(function(err) { console.log('SW erro:', err); });
+        }
+      });
     </script>
   </body>
 </html>
