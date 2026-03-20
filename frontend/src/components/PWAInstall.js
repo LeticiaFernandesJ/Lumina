@@ -42,20 +42,17 @@ export default function PWAInstall() {
       <style>{`
         .pwa-wrapper {
           position: fixed;
-          /* ocupa toda a largura menos 16px de cada lado */
           left: 16px;
           right: 16px;
           bottom: 16px;
           z-index: 99999;
           pointer-events: none;
-          /* centraliza o card quando há espaço (desktop) */
           display: flex;
           justify-content: center;
+          align-items: flex-end;
         }
-
         .pwa-card {
           pointer-events: auto;
-          /* no mobile ocupa tudo; no desktop limita a 440px */
           width: 100%;
           max-width: 440px;
           background: #1A1A1A;
@@ -64,19 +61,16 @@ export default function PWAInstall() {
           overflow: hidden;
           box-shadow: 0 8px 32px rgba(0,0,0,0.6);
         }
-
         .pwa-topline {
           height: 2px;
           background: linear-gradient(90deg, #C9A84C, #E6C56B, #C9A84C);
         }
-
         .pwa-body {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 12px 12px;
+          padding: 12px;
         }
-
         .pwa-icon-box {
           width: 38px;
           min-width: 38px;
@@ -88,12 +82,11 @@ export default function PWAInstall() {
           align-items: center;
           justify-content: center;
         }
-
         .pwa-texts {
           flex: 1;
           min-width: 0;
+          overflow: hidden;
         }
-
         .pwa-title {
           font-size: 13px;
           font-weight: 700;
@@ -104,7 +97,6 @@ export default function PWAInstall() {
           overflow: hidden;
           text-overflow: ellipsis;
         }
-
         .pwa-sub {
           font-size: 11px;
           color: #7A7060;
@@ -115,13 +107,11 @@ export default function PWAInstall() {
           overflow: hidden;
           text-overflow: ellipsis;
         }
-
         .pwa-btns {
           display: flex;
           gap: 6px;
           flex-shrink: 0;
         }
-
         .pwa-btn-no {
           background: transparent;
           border: 1px solid #333;
@@ -135,7 +125,6 @@ export default function PWAInstall() {
           white-space: nowrap;
           -webkit-tap-highlight-color: transparent;
         }
-
         .pwa-btn-yes {
           background: linear-gradient(135deg, #C9A84C, #E6C56B);
           border: none;
@@ -150,13 +139,11 @@ export default function PWAInstall() {
           white-space: nowrap;
           -webkit-tap-highlight-color: transparent;
         }
-
-        /* Telas muito pequenas: reduz texto dos botões */
         @media (max-width: 360px) {
           .pwa-btn-no  { font-size: 11px; padding: 0 8px; }
           .pwa-btn-yes { font-size: 11px; padding: 0 10px; }
           .pwa-title   { font-size: 12px; }
-          .pwa-sub     { font-size: 10px; }
+          .pwa-sub     { display: none; }
         }
       `}</style>
 
@@ -172,7 +159,6 @@ export default function PWAInstall() {
             >
               <div className="pwa-topline" />
               <div className="pwa-body">
-
                 <div className="pwa-icon-box">
                   <svg width="20" height="20" viewBox="0 0 36 36">
                     <defs>
@@ -185,17 +171,14 @@ export default function PWAInstall() {
                     <ellipse cx="18" cy="28" rx="5" ry="2" fill="url(#pwaGrad)" opacity="0.4"/>
                   </svg>
                 </div>
-
                 <div className="pwa-texts">
                   <div className="pwa-title">Instalar Lumina</div>
                   <div className="pwa-sub">Adicionar à tela inicial</div>
                 </div>
-
                 <div className="pwa-btns">
                   <button className="pwa-btn-no" onClick={handleDismiss}>Agora não</button>
                   <button className="pwa-btn-yes" onClick={handleInstall}>Instalar</button>
                 </div>
-
               </div>
             </motion.div>
           </div>
