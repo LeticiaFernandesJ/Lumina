@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ToastContext } from '../components/Layout';
 import api from '../utils/api';
+import { Modal, ModalHeader, ModalButton, ModalFooter, ModalInfo } from '../components/Modal';
 
 function calcProgress(weekIdx, checked, hasFlashcards, hasEssay, taskCount) {
   const doneTasks = Object.values(checked[weekIdx] || {}).filter(Boolean).length;
@@ -178,7 +179,7 @@ function WeekCard({ week, weekIdx, planId, planTopic, checked, setChecked, hasFl
 
               <div style={{ height: 1, background: '#1E1E1E', margin: '18px 0' }} />
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className='week-actions' style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {/* FLASHCARDS */}
                 <div style={{ padding: '16px', background: '#111', borderRadius: 12, border: `1px solid ${hasFlashcards[weekIdx] ? 'rgba(76,175,80,0.3)' : '#1E1E1E'}` }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -258,38 +259,22 @@ function WeekCard({ week, weekIdx, planId, planTopic, checked, setChecked, hasFl
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showEssayModal && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: '#161616', border: '1px solid #2A2A2A', borderRadius: 20, padding: 36, maxWidth: 480, width: '100%' }}>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>✍️</div>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 22, marginBottom: 8 }}>Redação da Semana {week.week}</h3>
-                <p style={{ color: '#C4B89A', fontSize: 14, lineHeight: 1.7 }}>{week.essay_prompt || `Escreva sobre: ${week.theme}`}</p>
-              </div>
-              <div style={{ background: '#111', borderRadius: 12, padding: '14px 16px', marginBottom: 24, border: '1px solid #2A2A2A' }}>
-                <div style={{ fontSize: 11, color: '#C9A84C', fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>Como funciona</div>
-                <div style={{ fontSize: 13, color: '#C4B89A', lineHeight: 1.7 }}>
-                  1. Clique em <strong style={{ color: '#C9A84C' }}>"Ir para Redação"</strong><br />
-                  2. Escreva e corrija com IA<br />
-                  3. Volte e clique em "Já escrevi"
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button onClick={goToEssay} style={{ padding: '13px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #C9A84C, #E6C56B)', color: '#0A0A0A', fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>
-                  ✍️ Ir para Redação
-                </button>
-                <button onClick={markEssayDone} style={{ padding: '12px', borderRadius: 10, border: '1px solid rgba(76,175,80,0.4)', background: 'rgba(76,175,80,0.08)', color: '#4CAF50', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: 14, cursor: 'pointer' }}>
-                  ✓ Já escrevi — marcar como concluído
-                </button>
-                <button onClick={() => setShowEssayModal(false)} style={{ padding: '12px', borderRadius: 10, border: '1px solid #2A2A2A', background: 'transparent', color: '#7A7060', fontFamily: 'DM Sans, sans-serif', fontSize: 14, cursor: 'pointer' }}>
-                  Cancelar
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <Modal open={showEssayModal} onClose={() => setShowEssayModal(false)} maxWidth={460}>
+        <ModalHeader icon="✍️" title={`Redação da Semana ${week.week}`} onClose={() => setShowEssayModal(false)} />
+        <p style={{ fontSize: 14, color: '#C4B89A', lineHeight: 1.7, marginBottom: 16, fontFamily: 'DM Sans, sans-serif' }}>
+          {week.essay_prompt || `Escreva sobre: ${week.theme}`}
+        </p>
+        <ModalInfo label="Como funciona" accent>
+          1. Clique em <strong style={{ color: '#C9A84C' }}>"Ir para Redação"</strong><br />
+          2. Escreva sua redação e corrija com IA<br />
+          3. Volte aqui e clique em "Já escrevi"
+        </ModalInfo>
+        <ModalFooter>
+          <ModalButton variant="ghost" onClick={() => setShowEssayModal(false)}>Cancelar</ModalButton>
+          <ModalButton variant="secondary" onClick={markEssayDone}>✓ Já escrevi</ModalButton>
+          <ModalButton onClick={goToEssay}>✍️ Ir para Redação</ModalButton>
+        </ModalFooter>
+      </Modal>
     </motion.div>
   );
 }
@@ -371,7 +356,7 @@ export default function PlanoEstudos() {
         <p style={{ color: '#7A7060' }}>Cronograma personalizado com progresso salvo automaticamente</p>
       </motion.div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: activePlan ? '300px 1fr' : '1fr', gap: 28 }}>
+      <div className='plan-grid' style={{ display: 'grid', gridTemplateColumns: activePlan ? 'minmax(260px,300px) 1fr' : '1fr', gap: 24 }}>
         <motion.div layout className="card" style={{ alignSelf: 'start' }}>
           <h2 style={{ fontSize: 18, marginBottom: 20 }}>Novo plano</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

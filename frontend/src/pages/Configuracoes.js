@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ToastContext } from '../components/Layout';
 import api from '../utils/api';
+import { ConfirmModal } from '../components/Modal';
 
 function Section({ title, children }) {
   return (
@@ -126,25 +127,17 @@ export default function Configuracoes() {
         Conta criada em {user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
       </div>
 
-      <AnimatePresence>
-        {showDelete && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: '#161616', border: '1px solid #2A2A2A', borderRadius: 20, padding: 36, maxWidth: 400, width: '90%' }}>
-              <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 16 }}>⚠️</div>
-              <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 22, marginBottom: 12, textAlign: 'center' }}>Excluir conta?</h3>
-              <p style={{ color: '#C4B89A', fontSize: 14, lineHeight: 1.7, marginBottom: 28, textAlign: 'center' }}>
-                Todos os seus PDFs, flashcards, redações e planos serão excluídos permanentemente. Esta ação não pode ser desfeita.
-              </p>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={() => setShowDelete(false)} className="btn-secondary" style={{ flex: 1 }}>Cancelar</button>
-                <button onClick={deleteAccount} style={{ flex: 1, background: '#E57373', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: 'pointer', fontSize: 15 }}>
-                  Sim, excluir tudo
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ConfirmModal
+        open={showDelete}
+        onClose={() => setShowDelete(false)}
+        onConfirm={deleteAccount}
+        title="Excluir conta?"
+        message="Todos os seus PDFs, flashcards, redações e planos serão excluídos permanentemente. Esta ação não pode ser desfeita."
+        confirmLabel="Sim, excluir tudo"
+        cancelLabel="Cancelar"
+        danger
+        icon="🗑️"
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContext } from '../components/Layout';
 import api from '../utils/api';
+import { Modal, ModalHeader } from '../components/Modal';
 
 function ScoreMeter({ score }) {
   const color = score >= 8 ? '#4CAF50' : score >= 6 ? '#C9A84C' : '#E57373';
@@ -328,23 +329,18 @@ export default function Redacao() {
       )}
 
       {/* Modal redação salva */}
-      <AnimatePresence>
+      <Modal open={!!selectedEssay} onClose={() => setSelectedEssay(null)} maxWidth={620}>
         {selectedEssay && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: '#161616', border: '1px solid #2A2A2A', borderRadius: 20, padding: 32, maxWidth: 620, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <h2 style={{ fontFamily: 'Playfair Display, serif' }}>{selectedEssay.topic_name}</h2>
-                <button onClick={() => setSelectedEssay(null)} style={{ background: 'transparent', color: '#7A7060', fontSize: 20, padding: '4px 8px', cursor: 'pointer', border: 'none' }}>✕</button>
-              </div>
-              <ScoreMeter score={selectedEssay.score} />
-              {selectedEssay.feedback_json?.general_feedback && (
-                <p style={{ color: '#C4B89A', fontSize: 14, lineHeight: 1.7, padding: '14px', background: '#111', borderRadius: 10, marginBottom: 16 }}>{selectedEssay.feedback_json.general_feedback}</p>
-              )}
-              <div style={{ fontSize: 14, color: '#7A7060', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{selectedEssay.content}</div>
-            </motion.div>
-          </div>
+          <>
+            <ModalHeader icon="✍️" title={selectedEssay.topic_name} onClose={() => setSelectedEssay(null)} />
+            <ScoreMeter score={selectedEssay.score} />
+            {selectedEssay.feedback_json?.general_feedback && (
+              <p style={{ color: '#C4B89A', fontSize: 14, lineHeight: 1.7, padding: '14px', background: '#111', borderRadius: 10, marginBottom: 16 }}>{selectedEssay.feedback_json.general_feedback}</p>
+            )}
+            <div style={{ fontSize: 14, color: '#7A7060', lineHeight: 1.7, whiteSpace: 'pre-wrap', maxHeight: 300, overflowY: 'auto', padding: '12px', background: '#111', borderRadius: 10 }}>{selectedEssay.content}</div>
+          </>
         )}
-      </AnimatePresence>
+      </Modal>
     </div>
   );
 }

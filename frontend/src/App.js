@@ -11,6 +11,7 @@ import PlanoEstudos from './pages/PlanoEstudos';
 import Frequencia from './pages/Frequencia';
 import Configuracoes from './pages/Configuracoes';
 import './index.css';
+import PWAInstall from './components/PWAInstall';
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -24,6 +25,8 @@ function PublicRoute({ children }) {
 
 function AppRoutes() {
   return (
+    <>
+    <PWAInstall />
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
@@ -39,6 +42,7 @@ function AppRoutes() {
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </>
   );
 }
 

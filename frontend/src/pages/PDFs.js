@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContext } from '../components/Layout';
 import api from '../utils/api';
+import { Modal, ModalHeader, ModalButton, ModalFooter, ModalInfo, ConfirmModal, useModal } from '../components/Modal';
 
 function ConfirmModal({ message, onConfirm, onCancel }) {
   return (
@@ -145,7 +146,7 @@ export default function PDFs() {
       }
 
       <AnimatePresence>
-        {selectedMaterial && <FlashcardModal material={selectedMaterial} onClose={() => setSelectedMaterial(null)} onGenerated={fetchMaterials} />}
+        <FlashcardModal material={selectedMaterial} onClose={() => setSelectedMaterial(null)} onGenerated={fetchMaterials} />
         {deleteTarget && <ConfirmModal message={`Excluir "${deleteTarget.title}"?`} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />}
       </AnimatePresence>
     </div>
