@@ -65,8 +65,10 @@ export default function PWAInstall() {
             style={{
               position: 'fixed',
               bottom: 80,
-              left: 16,
-              right: 16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 'calc(100vw - 32px)',
+              maxWidth: 440,
               zIndex: 99999,
               background: '#161616',
               border: '1px solid rgba(201,168,76,0.3)',
@@ -158,16 +160,16 @@ export default function PWAInstall() {
           style={{
             position: 'fixed',
             bottom: 20,
-            left: 16,
-            right: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'calc(100vw - 32px)',
+            maxWidth: 440,
             zIndex: 99999,
             background: '#161616',
             border: '1px solid rgba(201,168,76,0.3)',
             borderRadius: 16,
             overflow: 'hidden',
             boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-            maxWidth: 440,
-            margin: '0 auto',
           }}
         >
           {/* Linha dourada topo */}
