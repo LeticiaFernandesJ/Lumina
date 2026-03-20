@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Modal iOS com instruções
+// Modal iOS
 export function IOSInstallModal({ open, onClose }) {
   return (
     <AnimatePresence>
@@ -9,20 +9,18 @@ export function IOSInstallModal({ open, onClose }) {
         <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 16px 32px' }}>
           <motion.div
             onClick={e => e.stopPropagation()}
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 60 }}
+            initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 60 }}
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-            style={{ width: '100%', maxWidth: 440, background: '#161616', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 -4px 40px rgba(0,0,0,0.5)' }}
+            style={{ width: '100%', maxWidth: 440, background: '#161616', border: '1px solid rgba(201,168,76,0.35)', borderRadius: 20, overflow: 'hidden' }}
           >
             <div style={{ height: 2, background: 'linear-gradient(90deg, #C9A84C, #E6C56B, #C9A84C)' }} />
             <div style={{ padding: '24px 20px 28px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="28" height="28" viewBox="0 0 36 36"><defs><linearGradient id="iosG" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#C9A84C"/><stop offset="100%" stopColor="#E6C56B"/></linearGradient></defs><path d="M18 4C18 4 12 12 12 18c0 4 2 7 4 8-1-3 0-6 2-7 2 1 3 4 2 7 2-1 4-4 4-8 0-6-6-14-6-14z" fill="url(#iosG)"/><ellipse cx="18" cy="28" rx="5" ry="2" fill="url(#iosG)" opacity="0.4"/></svg>
                 </div>
                 <div>
-                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 19, color: '#E8DCC8', margin: 0 }}>Instalar Lumina</h3>
+                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#E8DCC8', margin: 0 }}>Instalar Lumina</h3>
                   <p style={{ fontSize: 13, color: '#7A7060', fontFamily: 'DM Sans, sans-serif', margin: '3px 0 0' }}>Siga os passos abaixo</p>
                 </div>
               </div>
@@ -39,7 +37,7 @@ export function IOSInstallModal({ open, onClose }) {
                   </div>
                 </div>
               ))}
-              <button onClick={onClose} style={{ width: '100%', height: 48, marginTop: 8, background: 'linear-gradient(135deg, #C9A84C, #E6C56B)', border: 'none', borderRadius: 12, color: '#0A0A0A', fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 15, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+              <button onClick={onClose} style={{ width: '100%', height: 48, marginTop: 8, background: 'linear-gradient(135deg, #C9A84C, #E6C56B)', border: 'none', borderRadius: 12, color: '#0A0A0A', fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
                 Entendido!
               </button>
             </div>
@@ -50,61 +48,41 @@ export function IOSInstallModal({ open, onClose }) {
   );
 }
 
-// Botão que aparece na tela de login/cadastro
 export function InstallAppButton() {
   const [showIOSModal, setShowIOSModal] = useState(false);
-  const [canInstall, setCanInstall] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Já instalado como PWA
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
-
+    // Já instalado como PWA standalone
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+      return;
+    }
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     setIsIOS(ios);
-
-    if (ios) {
-      // No iOS sempre mostra o botão com instrução manual
-      setCanInstall(true);
-      return;
-    }
-
-    // Android: verifica se o prompt já foi capturado
-    if (window.__pwaPrompt) {
-      setCanInstall(true);
-      return;
-    }
-
-    // Aguarda o evento (pode já ter passado, então checamos a cada 500ms por 5s)
-    const interval = setInterval(() => {
-      if (window.__pwaPrompt) {
-        setCanInstall(true);
-        clearInterval(interval);
-      }
-    }, 500);
-
-    const timeout = setTimeout(() => clearInterval(interval), 5000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
   }, []);
+
+  // Não mostra se já instalado
+  if (isInstalled) return null;
 
   const handleClick = async () => {
     if (isIOS) {
       setShowIOSModal(true);
       return;
     }
+    // Android: tenta o prompt salvo
     const p = window.__pwaPrompt;
-    if (!p) return;
-    p.prompt();
-    await p.userChoice;
-    window.__pwaPrompt = null;
-    setCanInstall(false);
+    if (p) {
+      p.prompt();
+      const { outcome } = await p.userChoice;
+      if (outcome === 'accepted') setIsInstalled(true);
+      window.__pwaPrompt = null;
+    } else {
+      // Fallback: mostra instruções genéricas
+      setShowIOSModal(true);
+    }
   };
-
-  if (!canInstall) return null;
 
   return (
     <>
@@ -118,7 +96,6 @@ export function InstallAppButton() {
           borderRadius: 10, marginTop: 14,
           color: '#C9A84C', fontFamily: 'DM Sans, sans-serif',
           fontSize: 14, fontWeight: 500, cursor: 'pointer',
-          transition: 'all 0.2s',
           WebkitTapHighlightColor: 'transparent',
         }}
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(201,168,76,0.08)'}
