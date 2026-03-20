@@ -5,7 +5,7 @@ import { ToastContext } from '../components/Layout';
 import api from '../utils/api';
 import { Modal, ModalHeader, ModalButton, ModalFooter, ModalInfo, ConfirmModal, useModal } from '../components/Modal';
 
-}
+
 
 function FlashcardModal({ material, onClose, onGenerated }) {
   const [count, setCount] = useState(10);
