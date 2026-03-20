@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
-    <!-- CRÍTICO: deve ser o PRIMEIRO script — intercepta o banner nativo do Chrome
-         antes do React ou qualquer outro código carregar -->
     <script>
       window.__pwaPrompt = null;
       window.addEventListener('beforeinstallprompt', function(e) {
@@ -16,14 +14,12 @@
     <meta name="theme-color" content="#C9A84C" />
     <meta name="description" content="Lumina — Plataforma de estudos com IA. Flashcards, redações e planos de estudo personalizados." />
 
-    <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Lumina" />
 
-    <!-- Apple icons -->
     <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-72x72.png" />
     <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96x96.png" />
@@ -32,15 +28,12 @@
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
 
-    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.png" />
 
-    <!-- iOS splash screens -->
     <meta name="msapplication-TileColor" content="#0A0A0A" />
     <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
 
-    <!-- Open Graph -->
     <meta property="og:title" content="Lumina — Estudos com IA" />
     <meta property="og:description" content="Flashcards, redações corrigidas por IA e planos de estudo personalizados." />
     <meta property="og:image" content="/icons/icon-512x512.png" />
@@ -49,7 +42,6 @@
     <title>Lumina</title>
 
     <style>
-      /* Splash screen enquanto o React carrega */
       #splash {
         position: fixed;
         inset: 0;
@@ -86,7 +78,6 @@
     </style>
   </head>
   <body>
-    <!-- Splash screen -->
     <div id="splash">
       <svg width="80" height="80" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -106,7 +97,6 @@
     <div id="root"></div>
 
     <script>
-      // Remove splash quando o React montar
       window.addEventListener('load', () => {
         setTimeout(() => {
           const splash = document.getElementById('splash');
@@ -117,7 +107,6 @@
         }, 800);
       });
 
-      // Registra Service Worker
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
