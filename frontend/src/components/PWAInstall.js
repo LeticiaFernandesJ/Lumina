@@ -1,38 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PWAInstall() {
   const [show, setShow] = useState(false);
-  const promptRef = useRef(null); // useRef em vez de useState para capturar mais rápido
 
   useEffect(() => {
-    // Já está instalado como app? Não faz nada
     if (window.matchMedia('(display-mode: standalone)').matches) return;
-
     const dismissed = localStorage.getItem('pwa_dismissed');
     if (dismissed && Date.now() - parseInt(dismissed) < 86400000) return;
 
+    // Se o prompt já foi capturado no index.html, mostra direto
+    if (window.__pwaPrompt) {
+      setTimeout(() => setShow(true), 2000);
+      return;
+    }
+
+    // Fallback: caso o evento ainda não tenha disparado
     const handler = (e) => {
-      // CRÍTICO: preventDefault deve ser chamado IMEDIATAMENTE,
-      // antes de qualquer setState, para suprimir o banner nativo do Chrome
       e.preventDefault();
-      promptRef.current = e;
-      // Mostra nosso banner customizado após 2s
+      window.__pwaPrompt = e;
       setTimeout(() => setShow(true), 2000);
     };
-
-    // Registra o listener o mais cedo possível
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstall = async () => {
-    const prompt = promptRef.current;
+    const prompt = window.__pwaPrompt;
     if (!prompt) return;
     prompt.prompt();
     await prompt.userChoice;
     setShow(false);
-    promptRef.current = null;
+    window.__pwaPrompt = null;
   };
 
   const handleDismiss = () => {
@@ -75,8 +74,8 @@ export default function PWAInstall() {
         }
         .pwa-icon-box {
           width: 40px;
-          height: 40px;
           min-width: 40px;
+          height: 40px;
           border-radius: 10px;
           background: #111;
           border: 1px solid #2A2A2A;
@@ -87,7 +86,6 @@ export default function PWAInstall() {
         .pwa-texts {
           flex: 1;
           min-width: 0;
-          overflow: hidden;
         }
         .pwa-title {
           font-size: 13px;
@@ -95,9 +93,6 @@ export default function PWAInstall() {
           color: #E8DCC8;
           font-family: 'DM Sans', sans-serif;
           line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
         .pwa-sub {
           font-size: 11px;
@@ -105,9 +100,6 @@ export default function PWAInstall() {
           font-family: 'DM Sans', sans-serif;
           margin-top: 2px;
           line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
         .pwa-btns {
           display: flex;
