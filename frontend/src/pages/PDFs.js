@@ -10,6 +10,8 @@ function FlashcardModal({ material, onClose, onGenerated }) {
   const [loading, setLoading] = useState(false);
   const toast = useContext(ToastContext);
 
+  if (!material) return null;
+
   const generate = async () => {
     setLoading(true);
     try {
