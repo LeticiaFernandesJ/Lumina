@@ -9,7 +9,6 @@
   "orientation": "portrait",
   "scope": "/",
   "lang": "pt-BR",
-  "categories": ["education", "productivity"],
   "icons": [
     { "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
