@@ -5,8 +5,6 @@ import { ToastContext } from '../components/Layout';
 import api from '../utils/api';
 import { Modal, ModalHeader, ModalButton, ModalFooter, ModalInfo, ConfirmModal, useModal } from '../components/Modal';
 
-
-
 function FlashcardModal({ material, onClose, onGenerated }) {
   const [count, setCount] = useState(10);
   const [loading, setLoading] = useState(false);
@@ -134,7 +132,16 @@ export default function PDFs() {
 
       <AnimatePresence>
         <FlashcardModal material={selectedMaterial} onClose={() => setSelectedMaterial(null)} onGenerated={fetchMaterials} />
-        {deleteTarget && <ConfirmModal message={`Excluir "${deleteTarget.title}"?`} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />}
+        <ConfirmModal
+          open={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDelete}
+          title="Excluir material"
+          message={`Deseja excluir "${deleteTarget?.title}"? Os flashcards gerados também serão removidos.`}
+          confirmLabel="Excluir"
+          danger
+          icon="🗑️"
+        />
       </AnimatePresence>
     </div>
   );
